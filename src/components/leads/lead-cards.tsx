@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Sparkles, Trash2 } from "lucide-react";
 
+import { FollowUpDateInput } from "@/components/leads/follow-up-date";
 import { StatusSelect } from "@/components/leads/status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +12,7 @@ interface LeadCardsProps {
   onStatusChange: (lead: Lead, status: string) => void;
   onAiFollowUp: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
+  onFollowUpChange: (lead: Lead, date: string | null) => void;
 }
 
 /** Mobile lead cards — everything stacks and wraps, no horizontal scrolling. */
@@ -19,6 +21,7 @@ export function LeadCards({
   onStatusChange,
   onAiFollowUp,
   onDelete,
+  onFollowUpChange,
 }: LeadCardsProps) {
   return (
     <div className="space-y-2.5">
@@ -42,14 +45,28 @@ export function LeadCards({
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
               <span className="tabular-nums">{lead.mobile}</span>
               <span className="text-muted-foreground">{lead.city ?? "—"}</span>
-              <span className="text-muted-foreground">{lead.service}</span>
+              <span className="break-words text-muted-foreground">{lead.service}</span>
+            </div>
+
+            {lead.notes && (
+              <p className="line-clamp-2 text-sm break-words text-muted-foreground">
+                {lead.notes}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Follow-up</span>
+              <FollowUpDateInput
+                lead={lead}
+                onChange={(date) => onFollowUpChange(lead, date)}
+              />
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">
                 Added {format(new Date(lead.created_at), "d MMM yyyy")}
               </span>
-              <div className="flex gap-2">
+              <div className="flex w-full gap-2 sm:w-auto">
                 <Button
                   variant="outline"
                   className="h-11 flex-1 gap-1.5 text-sm"

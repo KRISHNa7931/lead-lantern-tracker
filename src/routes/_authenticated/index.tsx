@@ -17,9 +17,17 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   useDeleteLead,
   useLeads,
+  useUpdateLeadFollowUp,
   useUpdateLeadStatus,
 } from "@/hooks/use-leads";
-import type { Lead } from "@/lib/leads";
+import {
+  EMPTY_FILTERS,
+  filterLeads,
+  hasActiveFilters,
+  sortLeads,
+  type Lead,
+  type SortOption,
+} from "@/lib/leads";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -49,12 +57,10 @@ function LeadsPage() {
   const { data: leads = [], isLoading, isError, refetch } = useLeads();
   const updateStatus = useUpdateLeadStatus();
   const deleteLead = useDeleteLead();
+  const updateFollowUp = useUpdateLeadFollowUp();
+  const [sort, setSort] = useState<SortOption>("newest");
 
-  const [filters, setFilters] = useState<LeadFilters>({
-    search: "",
-    status: null,
-    service: null,
-  });
+  const [filters, setFilters] = useState<LeadFilters>(EMPTY_FILTERS);
   const [addOpen, setAddOpen] = useState(false);
   const [aiLead, setAiLead] = useState<Lead | null>(null);
   const [deleteLeadTarget, setDeleteLeadTarget] = useState<Lead | null>(null);
@@ -66,22 +72,10 @@ function LeadsPage() {
     });
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = filters.search.trim().toLowerCase();
-    const digits = filters.search.replace(/\D/g, "");
-    return leads.filter((lead) => {
-      if (
-        term &&
-        !lead.name.toLowerCase().includes(term) &&
-        !(digits && lead.mobile.includes(digits))
-      ) {
-        return false;
-      }
-      if (filters.status && lead.status !== filters.status) return false;
-      if (filters.service && lead.service !== filters.service) return false;
-      return true;
-    });
-  }, [leads, filters]);
+  const filtered = useMemo(
+    () => sortLeads(filterLeads(leads, filters), sort),
+    [leads, filters, sort],
+  );
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -90,10 +84,7 @@ function LeadsPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const emptyFilters =
-    filters.search.trim() === "" &&
-    filters.status === null &&
-    filters.service === null;
+  const emptyFilters = !hasActiveFilters(filters);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -147,21 +138,22 @@ function LeadsPage() {
               onSelectStatus={(status) =>
                 setFilters((current) => ({ ...current, status }))
               }
+              selectedDue={filters.due}
+              onSelectDue={(due) => setFilters((current) => ({ ...current, due }))}
             />
 
             <LeadsToolbar
               filters={filters}
               onFiltersChange={setFilters}
               onAddLead={() => setAddOpen(true)}
+              sort={sort}
+              onSortChange={setSort}
             />
 
             {leads.length === 0 ? (
               <Card className="rounded-xl">
                 <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                  <p className="font-medium">No leads yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Add your first lead to start tracking follow-ups.
-                  </p>
+                  <p className="font-medium">No leads yet. Add your first lead.</p>
                   <Button className="h-11" onClick={() => setAddOpen(true)}>
                     <Plus className="size-4" />
                     Add lead
@@ -177,7 +169,7 @@ function LeadsPage() {
                       variant="outline"
                       className="h-11"
                       onClick={() =>
-                        setFilters({ search: "", status: null, service: null })
+                        setFilters(EMPTY_FILTERS)
                       }
                     >
                       Clear filters
@@ -195,6 +187,9 @@ function LeadsPage() {
                     }
                     onAiFollowUp={setAiLead}
                     onDelete={setDeleteLeadTarget}
+                    onFollowUpChange={(lead, follow_up_date) =>
+                      updateFollowUp.mutate({ id: lead.id, follow_up_date })
+                    }
                   />
                 </div>
                 <div className="md:hidden">
@@ -205,6 +200,9 @@ function LeadsPage() {
                     }
                     onAiFollowUp={setAiLead}
                     onDelete={setDeleteLeadTarget}
+                    onFollowUpChange={(lead, follow_up_date) =>
+                      updateFollowUp.mutate({ id: lead.id, follow_up_date })
+                    }
                   />
                 </div>
               </>
@@ -233,10 +231,15 @@ function LeadsPage() {
       />
       <DeleteLeadDialog
         lead={deleteLeadTarget}
+        deleting={deleteLead.isPending}
         onOpenChange={(open) => {
           if (!open) setDeleteLeadTarget(null);
         }}
-        onConfirm={(lead) => deleteLead.mutate(lead.id)}
+        onConfirm={(lead) =>
+          deleteLead.mutate(lead.id, {
+            onSettled: () => setDeleteLeadTarget(null),
+          })
+        }
       />
     </div>
   );

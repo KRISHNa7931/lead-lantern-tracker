@@ -1,4 +1,4 @@
-import { Plus, Search, X } from "lucide-react";
+import { CalendarClock, Plus, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,40 +9,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SERVICES, STATUSES } from "@/lib/leads";
+import {
+  EMPTY_FILTERS,
+  SERVICES,
+  SORT_OPTIONS,
+  STATUSES,
+  hasActiveFilters,
+  type LeadFilters,
+  type SortOption,
+} from "@/lib/leads";
+import { cn } from "@/lib/utils";
 
-export interface LeadFilters {
-  search: string;
-  status: string | null;
-  service: string | null;
-}
+export type { LeadFilters };
+
 
 interface LeadsToolbarProps {
   filters: LeadFilters;
   onFiltersChange: (filters: LeadFilters) => void;
   onAddLead: () => void;
+  sort: SortOption;
+  onSortChange: (sort: SortOption) => void;
 }
 
 export function LeadsToolbar({
   filters,
   onFiltersChange,
   onAddLead,
+  sort,
+  onSortChange,
 }: LeadsToolbarProps) {
-  const hasFilters =
-    filters.search.trim() !== "" ||
-    filters.status !== null ||
-    filters.service !== null;
+  const hasFilters = hasActiveFilters(filters);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative min-w-[180px] flex-1">
+      <div className="relative w-full min-w-0 sm:w-auto sm:min-w-[180px] sm:flex-1">
         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={filters.search}
           onChange={(event) =>
             onFiltersChange({ ...filters, search: event.target.value })
           }
-          placeholder="Search name or mobile…"
+          placeholder="Search by name or mobile"
           className="h-11 pl-9 md:h-9"
           aria-label="Search leads by name or mobile"
         />
@@ -56,7 +63,7 @@ export function LeadsToolbar({
       >
         <SelectTrigger
           aria-label="Filter by status"
-          className="h-11 w-[150px] md:h-9"
+          className="h-11 w-[calc(50%-0.25rem)] sm:w-[150px] md:h-9"
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>
@@ -78,7 +85,7 @@ export function LeadsToolbar({
       >
         <SelectTrigger
           aria-label="Filter by service"
-          className="h-11 w-[170px] md:h-9"
+          className="h-11 w-[calc(50%-0.25rem)] sm:w-[170px] md:h-9"
         >
           <SelectValue placeholder="Service" />
         </SelectTrigger>
@@ -92,17 +99,41 @@ export function LeadsToolbar({
         </SelectContent>
       </Select>
 
+      <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
+        <SelectTrigger aria-label="Sort by" className="h-11 w-[calc(50%-0.25rem)] sm:w-[200px] md:h-9">
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       <Button
-        variant="ghost"
+        variant={filters.due === "today" ? "default" : "outline"}
+        aria-pressed={filters.due === "today"}
         onClick={() =>
-          onFiltersChange({ search: "", status: null, service: null })
+          onFiltersChange({ ...filters, due: filters.due === "today" ? null : "today" })
         }
-        disabled={!hasFilters}
-        className="h-11 px-3 md:h-9"
+        className={cn("h-11 w-[calc(50%-0.25rem)] sm:w-auto md:h-9")}
       >
-        <X className="size-4" />
-        Clear filters
+        <CalendarClock className="size-4" />
+        Due today
       </Button>
+
+      {hasFilters && (
+        <Button
+          variant="ghost"
+          onClick={() => onFiltersChange(EMPTY_FILTERS)}
+          className="h-11 px-3 md:h-9"
+        >
+          <X className="size-4" />
+          Clear filters
+        </Button>
+      )}
 
       <Button
         onClick={onAddLead}
