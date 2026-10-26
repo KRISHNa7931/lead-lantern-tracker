@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/leads/status";
-import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -136,7 +136,7 @@ export function AiFollowupDialog({
             onClick={generate}
             disabled={loading}
           >
-            {loading && <Spinner className="size-4" />}
+            {loading && <Loader2 className="size-4 animate-spin" />}
             {generated ? "Regenerate" : "Generate with AI"}
           </Button>
         </div>
