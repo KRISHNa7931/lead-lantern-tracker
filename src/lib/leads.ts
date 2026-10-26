@@ -64,7 +64,7 @@ export function toLocalDateString(date: Date = new Date()): string {
 
 /** Parses a YYYY-MM-DD string as a local date (midnight local time). */
 export function parseLocalDate(value: string): Date {
-  const [y, m, d] = value.split("-").map(Number);
+  const [y = 1970, m = 1, d = 1] = value.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
