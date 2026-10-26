@@ -41,7 +41,7 @@ const leadSchema = z.object({
     .min(1, "Mobile number is required")
     .refine(
       (value) => normalizeMobile(value) !== null,
-      "Enter a valid 10-digit Indian mobile number",
+      "Enter a valid 10-digit mobile number",
     ),
   business_name: z.string().optional(),
   city: z.string().optional(),
@@ -231,7 +231,7 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-11 w-full">
-                        <SelectValue placeholder="Choose a service" />
+                        <SelectValue placeholder="Select service" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
