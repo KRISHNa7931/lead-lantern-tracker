@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LogOut, Plus, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { AiFollowupDialog } from "@/components/leads/ai-followup-dialog";
@@ -58,6 +58,13 @@ function LeadsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [aiLead, setAiLead] = useState<Lead | null>(null);
   const [deleteLeadTarget, setDeleteLeadTarget] = useState<Lead | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserEmail(user?.email ?? null);
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     const term = filters.search.trim().toLowerCase();
@@ -102,7 +109,7 @@ function LeadsPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden max-w-[220px] truncate text-sm text-muted-foreground sm:inline">
-              {supabaseAuthEmailPlaceholder()}
+              {userEmail ?? "Team member"}
             </span>
             <Button
               variant="ghost"
@@ -251,9 +258,4 @@ function LoadingSkeleton() {
       </div>
     </div>
   );
-}
-
-// Filled in by the header once the session is read client-side.
-function supabaseAuthEmailPlaceholder(): string {
-  return "";
 }
