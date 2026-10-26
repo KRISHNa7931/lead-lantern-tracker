@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Sparkles, Trash2 } from "lucide-react";
 
+import { FollowUpDateInput } from "@/components/leads/follow-up-date";
 import { StatusSelect } from "@/components/leads/status";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ interface LeadTableProps {
   onStatusChange: (lead: Lead, status: string) => void;
   onAiFollowUp: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
+  onFollowUpChange: (lead: Lead, date: string | null) => void;
   pendingStatusId?: string | null;
 }
 
@@ -26,6 +28,7 @@ export function LeadTable({
   onStatusChange,
   onAiFollowUp,
   onDelete,
+  onFollowUpChange,
 }: LeadTableProps) {
   return (
     <div className="overflow-x-auto rounded-xl border bg-card">
@@ -38,6 +41,7 @@ export function LeadTable({
             <TableHead>City</TableHead>
             <TableHead>Service</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Follow-up</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -56,6 +60,12 @@ export function LeadTable({
                 <StatusSelect
                   value={lead.status}
                   onValueChange={(status) => onStatusChange(lead, status)}
+                />
+              </TableCell>
+              <TableCell>
+                <FollowUpDateInput
+                  lead={lead}
+                  onChange={(date) => onFollowUpChange(lead, date)}
                 />
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">

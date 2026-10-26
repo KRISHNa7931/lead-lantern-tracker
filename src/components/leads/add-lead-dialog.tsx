@@ -41,12 +41,13 @@ const leadSchema = z.object({
     .min(1, "Mobile number is required")
     .refine(
       (value) => normalizeMobile(value) !== null,
-      "Enter a valid 10-digit Indian mobile number",
+      "Enter a valid 10-digit mobile number",
     ),
   business_name: z.string().optional(),
   city: z.string().optional(),
   service: z.string().min(1, "Please choose a service"),
   notes: z.string().optional(),
+  follow_up_date: z.string().optional(),
 });
 
 type LeadFormValues = z.infer<typeof leadSchema>;
@@ -58,6 +59,7 @@ const emptyValues: LeadFormValues = {
   city: "",
   service: "",
   notes: "",
+  follow_up_date: "",
 };
 
 interface AddLeadDialogProps {
@@ -116,6 +118,7 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
       city: values.city?.trim() || null,
       service: values.service,
       notes: values.notes?.trim() || null,
+      follow_up_date: values.follow_up_date || null,
     });
   }
 
@@ -228,7 +231,7 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-11 w-full">
-                        <SelectValue placeholder="Choose a service" />
+                        <SelectValue placeholder="Select service" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -239,6 +242,20 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="follow_up_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Follow-up date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} className="h-11" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
