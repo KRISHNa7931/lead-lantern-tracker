@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -261,6 +260,3 @@ function AuthForm({
     </form>
   );
 }
-
-// Keep the toast import used for future auth feedback (tree-shaken otherwise).
-void toast;
