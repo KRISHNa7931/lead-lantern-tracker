@@ -34,6 +34,34 @@ const SAFETY_SETTINGS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Supabase server-side client — mirrors the custom fetch in client.ts so that
+// new-format publishable keys (sb_publishable_...) are sent via the `apikey`
+// header instead of `Authorization: Bearer`, which would conflict with the
+// user's JWT token when calling getUser(userJwt).
+// ---------------------------------------------------------------------------
+function isNewSupabaseKey(key: string): boolean {
+  return key.startsWith("sb_publishable_") || key.startsWith("sb_secret_");
+}
+
+function makeSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers as HeadersInit).forEach((v, k) => headers.set(k, v));
+    }
+    // For new opaque keys, remove the default `Authorization: Bearer <key>`
+    // that the SDK sets — Supabase reads the key from `apikey` instead.
+    if (isNewSupabaseKey(supabaseKey) && headers.get("Authorization") === `Bearer ${supabaseKey}`) {
+      headers.delete("Authorization");
+    }
+    headers.set("apikey", supabaseKey);
+    return fetch(input as RequestInfo, { ...init, headers });
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Retry helper — single retry with a short delay for transient failures.
 // ---------------------------------------------------------------------------
 async function fetchWithRetry(
@@ -125,9 +153,11 @@ export const Route = createFileRoute("/api/generate-followup")({
 
           const supabase = createClient(supabaseUrl, supabaseKey, {
             auth: { persistSession: false, autoRefreshToken: false },
+            global: { fetch: makeSupabaseFetch(supabaseKey) },
           });
           const { data: userData, error: userError } = await supabase.auth.getUser(token);
           if (userError || !userData?.user) {
+            console.error("generate-followup: session validation failed", userError?.message);
             return json({ error: "Invalid session" }, 401);
           }
 
