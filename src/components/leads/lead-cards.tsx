@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2 } from "lucide-react";
 
 import { FollowUpDateInput } from "@/components/leads/follow-up-date";
 import { StatusSelect } from "@/components/leads/status";
@@ -35,6 +35,7 @@ interface LeadCardsProps {
   onStatusChange: (lead: Lead, status: string) => void;
   onAiFollowUp: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
+  onEdit: (lead: Lead) => void;
   onFollowUpChange: (lead: Lead, date: string | null) => void;
 }
 
@@ -44,6 +45,7 @@ export function LeadCards({
   onStatusChange,
   onAiFollowUp,
   onDelete,
+  onEdit,
   onFollowUpChange,
 }: LeadCardsProps) {
   return (
@@ -53,18 +55,30 @@ export function LeadCards({
           key={lead.id}
           className="rounded-xl border border-border bg-card px-4 py-3 shadow-none transition-shadow duration-150"
         >
-          {/* Row 1: Name (smart wrap) + status pill */}
+          {/* Row 1: Name (smart wrap) + edit pencil + status pill */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="text-[14px] font-semibold leading-snug text-foreground">
                 <SmartName text={lead.name} limit={18} />
               </p>
             </div>
-            <StatusSelect
-              value={lead.status}
-              onValueChange={(status) => onStatusChange(lead, status)}
-              className="shrink-0"
-            />
+            <div className="flex shrink-0 items-center gap-1">
+              {/* Edit pencil — always visible on mobile cards */}
+              <Button
+                variant="ghost"
+                aria-label="Edit lead"
+                title="Edit"
+                className="h-7 w-7 rounded-lg p-0 text-muted-foreground/60 transition-colors duration-150 hover:bg-primary/10 hover:text-primary"
+                onClick={() => onEdit(lead)}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+              <StatusSelect
+                value={lead.status}
+                onValueChange={(status) => onStatusChange(lead, status)}
+                className="shrink-0"
+              />
+            </div>
           </div>
 
           {/* Row 2: Mobile + city muted */}

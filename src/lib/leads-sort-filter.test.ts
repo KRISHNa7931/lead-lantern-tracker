@@ -15,8 +15,8 @@ const all = [a, b, c, d];
 const ids = (l: Lead[]) => l.map((x) => x.id);
 
 describe("sortLeads", () => {
-  it("newest first by default", () => expect(ids(sortLeads(all, "newest"))).toEqual(["d", "c", "b", "a"]));
-  it("oldest first", () => expect(ids(sortLeads(all, "oldest"))).toEqual(["a", "b", "c", "d"]));
+  it("newest first by default (empty sort)", () => expect(ids(sortLeads(all, ""))).toEqual(["d", "c", "b", "a"]));
+  it("default sort matches explicit empty string", () => expect(ids(sortLeads(all, ""))).toEqual(["d", "c", "b", "a"]));
   it("Interested first keeps every lead, newest inside groups", () =>
     expect(ids(sortLeads(all, "status:Interested"))).toEqual(["c", "b", "d", "a"]));
   it("follow-up date earliest first, no date last", () =>

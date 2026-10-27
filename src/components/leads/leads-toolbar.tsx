@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DEFAULT_SORT,
   EMPTY_FILTERS,
   SERVICES,
   SORT_OPTIONS,
@@ -44,6 +45,7 @@ export function LeadsToolbar({
   onSortChange,
 }: LeadsToolbarProps) {
   const hasFilters = hasActiveFilters(filters);
+  const hasSortOrFilters = hasFilters || sort !== DEFAULT_SORT;
 
   return (
     <div className="space-y-2 md:space-y-0">
@@ -107,11 +109,15 @@ export function LeadsToolbar({
           </SelectContent>
         </Select>
 
-        <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
+        <Select
+          value={sort || "__default__"}
+          onValueChange={(value) => onSortChange(value === "__default__" ? DEFAULT_SORT : value as SortOption)}
+        >
           <SelectTrigger aria-label="Sort by" className={cn(controlH, controlRadius, "w-[160px] text-[13px]")}>
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="__default__" className="text-muted-foreground">Sort by</SelectItem>
             {SORT_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -132,10 +138,13 @@ export function LeadsToolbar({
           Due today
         </Button>
 
-        {hasFilters && (
+        {hasSortOrFilters && (
           <Button
             variant="ghost"
-            onClick={() => onFiltersChange(EMPTY_FILTERS)}
+            onClick={() => {
+              onFiltersChange(EMPTY_FILTERS);
+              onSortChange(DEFAULT_SORT);
+            }}
             className={cn(controlH, controlRadius, "gap-1.5 px-2.5 text-[13px] text-muted-foreground")}
           >
             <X className="size-3.5" />
@@ -216,11 +225,15 @@ export function LeadsToolbar({
             </SelectContent>
           </Select>
 
-          <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
+          <Select
+            value={sort || "__default__"}
+            onValueChange={(value) => onSortChange(value === "__default__" ? DEFAULT_SORT : value as SortOption)}
+          >
             <SelectTrigger aria-label="Sort by" className="h-10 rounded-lg text-[13px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="__default__" className="text-muted-foreground">Sort by</SelectItem>
               {SORT_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -252,10 +265,13 @@ export function LeadsToolbar({
             Import
           </Button>
 
-          {hasFilters && (
+          {hasSortOrFilters && (
             <Button
               variant="ghost"
-              onClick={() => onFiltersChange(EMPTY_FILTERS)}
+              onClick={() => {
+                onFiltersChange(EMPTY_FILTERS);
+                onSortChange(DEFAULT_SORT);
+              }}
               className="h-9 rounded-lg gap-1.5 px-2.5 text-[13px] text-muted-foreground"
             >
               <X className="size-3.5" />

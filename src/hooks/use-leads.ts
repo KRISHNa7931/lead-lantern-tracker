@@ -51,6 +51,49 @@ export function useAddLead(options?: { onSuccess?: (lead: Lead) => void }) {
   });
 }
 
+export interface UpdateLeadInput {
+  id: string;
+  name: string;
+  mobile: string;
+  business_name: string | null;
+  city: string | null;
+  service: string;
+  notes: string | null;
+}
+
+export function useUpdateLead(options?: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...fields }: UpdateLeadInput): Promise<Lead> => {
+      const { data, error } = await supabase
+        .from("leads")
+        .update(fields)
+        .eq("id", id)
+        .select("*")
+        .single();
+      if (error) throw new Error(error.message);
+      return data as Lead;
+    },
+    onMutate: async ({ id, ...fields }) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const previous = queryClient.getQueryData<Lead[]>(["leads"]);
+      queryClient.setQueryData<Lead[]>(["leads"], (old) =>
+        (old ?? []).map((lead) => (lead.id === id ? { ...lead, ...fields } : lead)),
+      );
+      return { previous };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Lead updated");
+      options?.onSuccess?.();
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(["leads"], context.previous);
+      toast.error("Could not update the lead. Please try again.");
+    },
+  });
+}
+
 /**
  * Optimistic status change: the local list (and therefore the dashboard
  * counts) updates immediately, then rolls back with an error toast if the

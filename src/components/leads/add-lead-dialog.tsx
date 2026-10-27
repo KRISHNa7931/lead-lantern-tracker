@@ -4,8 +4,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAddLead } from "@/hooks/use-leads";
+import { useAddLead, useUpdateLead } from "@/hooks/use-leads";
 import { SERVICES, normalizeMobile } from "@/lib/leads";
+import type { Lead } from "@/lib/leads";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,9 +66,12 @@ const emptyValues: LeadFormValues = {
 interface AddLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When provided the dialog operates in edit mode. */
+  editLead?: Lead | null;
 }
 
-export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
+export function AddLeadDialog({ open, onOpenChange, editLead }: AddLeadDialogProps) {
+  const isEdit = !!editLead;
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
   const [duplicateMobile, setDuplicateMobile] = useState<string | null>(null);
   const form = useForm<LeadFormValues>({
@@ -82,26 +86,57 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
       onOpenChange(false);
     },
   });
+  const updateLead = useUpdateLead({
+    onSuccess: () => {
+      form.reset(emptyValues);
+      setDuplicateName(null);
+      setDuplicateMobile(null);
+      onOpenChange(false);
+    },
+  });
 
-  // Reset everything when the dialog closes.
+  const isPending = isEdit ? updateLead.isPending : addLead.isPending;
+
+  // Reset / prefill when the dialog opens or closes, or when editLead changes.
   useEffect(() => {
     if (!open) {
       form.reset(emptyValues);
       setDuplicateName(null);
       setDuplicateMobile(null);
+      return;
     }
-  }, [open, form]);
+    if (editLead) {
+      form.reset({
+        name: editLead.name,
+        mobile: editLead.mobile,
+        business_name: editLead.business_name ?? "",
+        city: editLead.city ?? "",
+        service: editLead.service,
+        notes: editLead.notes ?? "",
+        follow_up_date: editLead.follow_up_date ?? "",
+      });
+    } else {
+      form.reset(emptyValues);
+    }
+    setDuplicateName(null);
+    setDuplicateMobile(null);
+  }, [open, editLead, form]);
 
   async function checkAndSave(values: LeadFormValues) {
     const mobile = normalizeMobile(values.mobile);
     if (!mobile) return;
 
     if (!duplicateName) {
-      const { data } = await supabase
+      let query = supabase
         .from("leads")
         .select("name")
         .eq("mobile", mobile)
         .limit(1);
+      // In edit mode, ignore the lead currently being edited.
+      if (editLead) {
+        query = query.neq("id", editLead.id);
+      }
+      const { data } = await query;
       if (data && data.length > 0) {
         setDuplicateName((data[0] as { name: string }).name);
         setDuplicateMobile(mobile);
@@ -111,15 +146,28 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
 
     setDuplicateName(null);
     setDuplicateMobile(null);
-    addLead.mutate({
-      name: values.name,
-      mobile,
-      business_name: values.business_name?.trim() || null,
-      city: values.city?.trim() || null,
-      service: values.service,
-      notes: values.notes?.trim() || null,
-      follow_up_date: values.follow_up_date || null,
-    });
+
+    if (isEdit) {
+      updateLead.mutate({
+        id: editLead.id,
+        name: values.name,
+        mobile,
+        business_name: values.business_name?.trim() || null,
+        city: values.city?.trim() || null,
+        service: values.service,
+        notes: values.notes?.trim() || null,
+      });
+    } else {
+      addLead.mutate({
+        name: values.name,
+        mobile,
+        business_name: values.business_name?.trim() || null,
+        city: values.city?.trim() || null,
+        service: values.service,
+        notes: values.notes?.trim() || null,
+        follow_up_date: values.follow_up_date || null,
+      });
+    }
   }
 
   void duplicateMobile;
@@ -128,9 +176,13 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[100dvh] overflow-y-auto rounded-xl p-5 sm:max-w-md max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:w-full max-md:max-w-full max-md:rounded-none">
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-[15px] font-semibold">Add lead</DialogTitle>
+          <DialogTitle className="text-[15px] font-semibold">
+            {isEdit ? "Edit lead" : "Add lead"}
+          </DialogTitle>
           <DialogDescription className="text-[13px]">
-            Save a new lead for the team. Fields marked * are required.
+            {isEdit
+              ? "Update this lead's details. Fields marked * are required."
+              : "Save a new lead for the team. Fields marked * are required."}
           </DialogDescription>
         </DialogHeader>
 
@@ -248,19 +300,22 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="follow_up_date"
-              render={({ field }) => (
-                <FormItem className="space-y-1">
-                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Follow-up date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} className="h-9 rounded-lg text-[13px]" />
-                  </FormControl>
-                  <FormMessage className="text-[11px]" />
-                </FormItem>
-              )}
-            />
+            {/* Follow-up date is only shown in add mode; edit mode does not touch it */}
+            {!isEdit && (
+              <FormField
+                control={form.control}
+                name="follow_up_date"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-[12px] font-medium text-muted-foreground">Follow-up date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} className="h-9 rounded-lg text-[13px]" />
+                    </FormControl>
+                    <FormMessage className="text-[11px]" />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -297,9 +352,15 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
                 type="submit"
                 size="sm"
                 className="h-9 flex-1 rounded-lg text-[13px] sm:flex-none"
-                disabled={addLead.isPending}
+                disabled={isPending}
               >
-                {addLead.isPending ? "Saving…" : duplicateName ? "Save anyway" : "Save lead"}
+                {isPending
+                  ? "Saving…"
+                  : duplicateName
+                    ? "Save anyway"
+                    : isEdit
+                      ? "Save changes"
+                      : "Save lead"}
               </Button>
             </DialogFooter>
           </form>

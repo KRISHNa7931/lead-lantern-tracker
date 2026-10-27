@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2 } from "lucide-react";
 
 import { FollowUpDateInput } from "@/components/leads/follow-up-date";
 import { StatusSelect } from "@/components/leads/status";
@@ -18,6 +18,7 @@ interface LeadTableProps {
   onStatusChange: (lead: Lead, status: string) => void;
   onAiFollowUp: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
+  onEdit: (lead: Lead) => void;
   onFollowUpChange: (lead: Lead, date: string | null) => void;
   pendingStatusId?: string | null;
 }
@@ -55,14 +56,15 @@ export function LeadTable({
   onStatusChange,
   onAiFollowUp,
   onDelete,
+  onEdit,
   onFollowUpChange,
 }: LeadTableProps) {
   return (
     /*
      * Card wrapper.
      * < 1320 px: overflow-hidden so the inner container can scroll horizontally.
-     * ≥ 1320 px: overflow-visible so the absolute-positioned trash button
-     *            in the page margin is not clipped.
+     * ≥ 1320 px: overflow-visible so the absolute-positioned trash / pencil
+     *            buttons in the page margins are not clipped.
      */
     <div className="overflow-hidden rounded-xl border border-border bg-card min-[1320px]:overflow-visible">
       {/* Inner scroll container — same breakpoint logic */}
@@ -102,8 +104,42 @@ export function LeadTable({
                 >
                   {/* Name — smart wrapping at 18 chars */}
                   <TableCell
-                    className={`px-2.5 py-2 text-[13px] font-medium ${isLast ? "min-[1320px]:rounded-bl-xl" : ""}`}
+                    className={`relative px-2.5 py-2 text-[13px] font-medium ${isLast ? "min-[1320px]:rounded-bl-xl" : ""}`}
                   >
+                    {/*
+                     * Pencil edit — OUTSIDE the card on wide screens (≥ 1320px).
+                     * Mirrors the trash button's pattern: absolutely positioned
+                     * from the first cell, pointing to the LEFT margin via right-full.
+                     */}
+                    <div className="pointer-events-none absolute top-0 right-full hidden h-full w-10 items-center justify-end pr-2 min-[1320px]:flex">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Edit lead"
+                        title="Edit"
+                        className="pointer-events-auto h-7 w-7 p-0 text-muted-foreground/60 opacity-0 transition-all duration-150 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
+                        onClick={() => onEdit(lead)}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </div>
+
+                    {/*
+                     * Pencil edit — INSIDE the Name cell on mid screens (768–1319px).
+                     * Absolutely positioned at left edge, vertically centered,
+                     * hidden by default, shown on row hover / keyboard focus.
+                     */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Edit lead"
+                      title="Edit"
+                      className="absolute top-1/2 left-0.5 z-10 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground/60 opacity-0 transition-all duration-150 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 min-[1320px]:hidden"
+                      onClick={() => onEdit(lead)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+
                     <SmartName text={lead.name} limit={18} />
                   </TableCell>
 

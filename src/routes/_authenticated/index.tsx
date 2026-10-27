@@ -21,6 +21,7 @@ import {
   useUpdateLeadStatus,
 } from "@/hooks/use-leads";
 import {
+  DEFAULT_SORT,
   EMPTY_FILTERS,
   filterLeads,
   hasActiveFilters,
@@ -29,7 +30,7 @@ import {
   type SortOption,
 } from "@/lib/leads";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/")(  {
   head: () => ({
     meta: [
       { title: "Lead Manager" },
@@ -58,13 +59,14 @@ function LeadsPage() {
   const updateStatus = useUpdateLeadStatus();
   const deleteLead = useDeleteLead();
   const updateFollowUp = useUpdateLeadFollowUp();
-  const [sort, setSort] = useState<SortOption>("newest");
+  const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);
 
   const [filters, setFilters] = useState<LeadFilters>(EMPTY_FILTERS);
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [aiLead, setAiLead] = useState<Lead | null>(null);
   const [deleteLeadTarget, setDeleteLeadTarget] = useState<Lead | null>(null);
+  const [editLead, setEditLead] = useState<Lead | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,6 +88,24 @@ function LeadsPage() {
   }
 
   const emptyFilters = !hasActiveFilters(filters);
+
+  /** Open the dialog in add mode. */
+  function handleAddLead() {
+    setEditLead(null);
+    setAddOpen(true);
+  }
+
+  /** Open the dialog in edit mode with the given lead prefilled. */
+  function handleEditLead(lead: Lead) {
+    setEditLead(lead);
+    setAddOpen(true);
+  }
+
+  /** When the add/edit dialog closes, clear the editLead state. */
+  function handleDialogOpenChange(open: boolean) {
+    setAddOpen(open);
+    if (!open) setEditLead(null);
+  }
 
   return (
     <div className="min-h-dvh bg-background">
@@ -151,7 +171,7 @@ function LeadsPage() {
             <LeadsToolbar
               filters={filters}
               onFiltersChange={setFilters}
-              onAddLead={() => setAddOpen(true)}
+              onAddLead={handleAddLead}
               onImport={() => setImportOpen(true)}
               sort={sort}
               onSortChange={setSort}
@@ -168,7 +188,7 @@ function LeadsPage() {
                     Add your first lead to get started.
                   </p>
                 </div>
-                <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setAddOpen(true)}>
+                <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={handleAddLead}>
                   <Plus className="size-3.5" />
                   Add lead
                 </Button>
@@ -205,6 +225,7 @@ function LeadsPage() {
                     }
                     onAiFollowUp={setAiLead}
                     onDelete={setDeleteLeadTarget}
+                    onEdit={handleEditLead}
                     onFollowUpChange={(lead, follow_up_date) =>
                       updateFollowUp.mutate({ id: lead.id, follow_up_date })
                     }
@@ -218,6 +239,7 @@ function LeadsPage() {
                     }
                     onAiFollowUp={setAiLead}
                     onDelete={setDeleteLeadTarget}
+                    onEdit={handleEditLead}
                     onFollowUpChange={(lead, follow_up_date) =>
                       updateFollowUp.mutate({ id: lead.id, follow_up_date })
                     }
@@ -234,12 +256,16 @@ function LeadsPage() {
         aria-label="Add lead"
         size="icon"
         className="fixed right-5 bottom-5 z-10 size-12 rounded-full shadow-lg transition-transform duration-150 hover:scale-105 md:hidden"
-        onClick={() => setAddOpen(true)}
+        onClick={handleAddLead}
       >
         <Plus className="size-5" />
       </Button>
 
-      <AddLeadDialog open={addOpen} onOpenChange={setAddOpen} />
+      <AddLeadDialog
+        open={addOpen}
+        onOpenChange={handleDialogOpenChange}
+        editLead={editLead}
+      />
       <ImportLeadsDialog open={importOpen} onOpenChange={setImportOpen} leads={leads} />
       <AiFollowupDialog
         lead={aiLead}

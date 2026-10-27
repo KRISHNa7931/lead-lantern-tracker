@@ -124,8 +124,6 @@ export function filterLeads<T extends Lead>(leads: T[], f: LeadFilters, today?: 
 }
 
 export const SORT_OPTIONS = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
   { value: "status:Interested", label: "Interested first" },
   { value: "status:New", label: "New first" },
   { value: "status:Contacted", label: "Contacted first" },
@@ -133,12 +131,14 @@ export const SORT_OPTIONS = [
   { value: "followup", label: "Follow-up date (earliest first)" },
 ] as const;
 
-export type SortOption = (typeof SORT_OPTIONS)[number]["value"];
+export type SortOption = (typeof SORT_OPTIONS)[number]["value"] | "";
+
+/** Default sort: newest first by created_at descending (no option selected). */
+export const DEFAULT_SORT: SortOption = "";
 
 export function sortLeads<T extends Lead>(leads: T[], sort: SortOption): T[] {
   const newest = (a: T, b: T) => b.created_at.localeCompare(a.created_at);
   const list = [...leads];
-  if (sort === "oldest") return list.sort((a, b) => -newest(a, b));
   if (sort === "followup") {
     return list.sort((a, b) => {
       const da = a.follow_up_date?.slice(0, 10);
