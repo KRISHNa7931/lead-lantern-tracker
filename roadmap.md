@@ -1,0 +1,3 @@
+- [ ] Add CSV/XLSX parsing, validation, duplicate detection, and rule tests.
+- [ ] Add import dialog, sample CSV, chunked insertion, progress, and cache refresh.
+- [ ] Verify tests, preview, and existing build errors without changing behavior.
