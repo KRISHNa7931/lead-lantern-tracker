@@ -1,4 +1,4 @@
-import { CalendarClock, Plus, Search, X } from "lucide-react";
+import { CalendarClock, FileUp, Plus, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ interface LeadsToolbarProps {
   filters: LeadFilters;
   onFiltersChange: (filters: LeadFilters) => void;
   onAddLead: () => void;
+  onImport: () => void;
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
 }
@@ -35,6 +36,7 @@ export function LeadsToolbar({
   filters,
   onFiltersChange,
   onAddLead,
+  onImport,
   sort,
   onSortChange,
 }: LeadsToolbarProps) {
@@ -134,6 +136,11 @@ export function LeadsToolbar({
           Clear filters
         </Button>
       )}
+
+      <Button variant="outline" onClick={onImport} className="h-11 md:h-9">
+        <FileUp className="size-4" />
+        Import
+      </Button>
 
       <Button
         onClick={onAddLead}
