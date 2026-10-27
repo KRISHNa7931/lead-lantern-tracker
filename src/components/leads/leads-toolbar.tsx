@@ -32,6 +32,9 @@ interface LeadsToolbarProps {
   onSortChange: (sort: SortOption) => void;
 }
 
+const controlH = "h-9";
+const controlRadius = "rounded-lg";
+
 export function LeadsToolbar({
   filters,
   onFiltersChange,
@@ -43,112 +46,224 @@ export function LeadsToolbar({
   const hasFilters = hasActiveFilters(filters);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full min-w-0 sm:w-auto sm:min-w-[180px] sm:flex-1">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={filters.search}
-          onChange={(event) =>
-            onFiltersChange({ ...filters, search: event.target.value })
+    <div className="space-y-2 md:space-y-0">
+      {/* ── Desktop: one tidy row ── */}
+      <div className="hidden items-center gap-2 md:flex">
+        {/* Search — wider, takes up remaining space */}
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filters.search}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, search: event.target.value })
+            }
+            placeholder="Search by name or mobile"
+            className={cn(controlH, controlRadius, "pl-8 text-[13px]")}
+            aria-label="Search leads by name or mobile"
+          />
+        </div>
+
+        <Select
+          value={filters.status ?? "all"}
+          onValueChange={(value) =>
+            onFiltersChange({ ...filters, status: value === "all" ? null : value })
           }
-          placeholder="Search by name or mobile"
-          className="h-11 pl-9 md:h-9"
-          aria-label="Search leads by name or mobile"
-        />
+        >
+          <SelectTrigger
+            aria-label="Filter by status"
+            className={cn(controlH, controlRadius, "w-[140px] text-[13px]")}
+          >
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {STATUSES.map((status) => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.service ?? "all"}
+          onValueChange={(value) =>
+            onFiltersChange({ ...filters, service: value === "all" ? null : value })
+          }
+        >
+          <SelectTrigger
+            aria-label="Filter by service"
+            className={cn(controlH, controlRadius, "w-[160px] text-[13px]")}
+          >
+            <SelectValue placeholder="Service" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All services</SelectItem>
+            {SERVICES.map((service) => (
+              <SelectItem key={service} value={service}>
+                {service}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
+          <SelectTrigger aria-label="Sort by" className={cn(controlH, controlRadius, "w-[160px] text-[13px]")}>
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant={filters.due === "today" ? "default" : "outline"}
+          aria-pressed={filters.due === "today"}
+          onClick={() =>
+            onFiltersChange({ ...filters, due: filters.due === "today" ? null : "today" })
+          }
+          className={cn(controlH, controlRadius, "gap-1.5 text-[13px] px-3")}
+        >
+          <CalendarClock className="size-3.5" />
+          Due today
+        </Button>
+
+        {hasFilters && (
+          <Button
+            variant="ghost"
+            onClick={() => onFiltersChange(EMPTY_FILTERS)}
+            className={cn(controlH, controlRadius, "gap-1.5 px-2.5 text-[13px] text-muted-foreground")}
+          >
+            <X className="size-3.5" />
+            Clear
+          </Button>
+        )}
+
+        <Button
+          variant="outline"
+          onClick={onImport}
+          className={cn(controlH, controlRadius, "gap-1.5 text-[13px] px-3")}
+        >
+          <FileUp className="size-3.5" />
+          Import
+        </Button>
+
+        {/* Primary CTA — accent color, right side */}
+        <Button
+          onClick={onAddLead}
+          className={cn(controlH, controlRadius, "gap-1.5 text-[13px] px-3.5")}
+        >
+          <Plus className="size-3.5" />
+          Add lead
+        </Button>
       </div>
 
-      <Select
-        value={filters.status ?? "all"}
-        onValueChange={(value) =>
-          onFiltersChange({ ...filters, status: value === "all" ? null : value })
-        }
-      >
-        <SelectTrigger
-          aria-label="Filter by status"
-          className="h-11 w-[calc(50%-0.25rem)] sm:w-[150px] md:h-9"
-        >
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          {STATUSES.map((status) => (
-            <SelectItem key={status} value={status}>
-              {status}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* ── Mobile: search full-width, filters 2-col grid ── */}
+      <div className="flex flex-col gap-2 md:hidden">
+        <div className="relative">
+          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filters.search}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, search: event.target.value })
+            }
+            placeholder="Search by name or mobile"
+            className="h-10 rounded-lg pl-8 text-[13px]"
+            aria-label="Search leads by name or mobile"
+          />
+        </div>
 
-      <Select
-        value={filters.service ?? "all"}
-        onValueChange={(value) =>
-          onFiltersChange({ ...filters, service: value === "all" ? null : value })
-        }
-      >
-        <SelectTrigger
-          aria-label="Filter by service"
-          className="h-11 w-[calc(50%-0.25rem)] sm:w-[170px] md:h-9"
-        >
-          <SelectValue placeholder="Service" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All services</SelectItem>
-          {SERVICES.map((service) => (
-            <SelectItem key={service} value={service}>
-              {service}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={filters.status ?? "all"}
+            onValueChange={(value) =>
+              onFiltersChange({ ...filters, status: value === "all" ? null : value })
+            }
+          >
+            <SelectTrigger aria-label="Filter by status" className="h-10 rounded-lg text-[13px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
-        <SelectTrigger aria-label="Sort by" className="h-11 w-[calc(50%-0.25rem)] sm:w-[200px] md:h-9">
-          <SelectValue placeholder="Sort by" />
-        </SelectTrigger>
-        <SelectContent>
-          {SORT_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+          <Select
+            value={filters.service ?? "all"}
+            onValueChange={(value) =>
+              onFiltersChange({ ...filters, service: value === "all" ? null : value })
+            }
+          >
+            <SelectTrigger aria-label="Filter by service" className="h-10 rounded-lg text-[13px]">
+              <SelectValue placeholder="Service" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All services</SelectItem>
+              {SERVICES.map((service) => (
+                <SelectItem key={service} value={service}>
+                  {service}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      <Button
-        variant={filters.due === "today" ? "default" : "outline"}
-        aria-pressed={filters.due === "today"}
-        onClick={() =>
-          onFiltersChange({ ...filters, due: filters.due === "today" ? null : "today" })
-        }
-        className={cn("h-11 w-[calc(50%-0.25rem)] sm:w-auto md:h-9")}
-      >
-        <CalendarClock className="size-4" />
-        Due today
-      </Button>
+          <Select value={sort} onValueChange={(value) => onSortChange(value as SortOption)}>
+            <SelectTrigger aria-label="Sort by" className="h-10 rounded-lg text-[13px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {hasFilters && (
-        <Button
-          variant="ghost"
-          onClick={() => onFiltersChange(EMPTY_FILTERS)}
-          className="h-11 px-3 md:h-9"
-        >
-          <X className="size-4" />
-          Clear filters
-        </Button>
-      )}
+          <Button
+            variant={filters.due === "today" ? "default" : "outline"}
+            aria-pressed={filters.due === "today"}
+            onClick={() =>
+              onFiltersChange({ ...filters, due: filters.due === "today" ? null : "today" })
+            }
+            className="h-10 rounded-lg gap-1.5 text-[13px]"
+          >
+            <CalendarClock className="size-3.5" />
+            Due today
+          </Button>
+        </div>
 
-      <Button variant="outline" onClick={onImport} className="h-11 md:h-9">
-        <FileUp className="size-4" />
-        Import
-      </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={onImport}
+            className="h-9 flex-1 rounded-lg gap-1.5 text-[13px]"
+          >
+            <FileUp className="size-3.5" />
+            Import
+          </Button>
 
-      <Button
-        onClick={onAddLead}
-        className="hidden h-9 md:inline-flex"
-      >
-        <Plus className="size-4" />
-        Add lead
-      </Button>
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              onClick={() => onFiltersChange(EMPTY_FILTERS)}
+              className="h-9 rounded-lg gap-1.5 px-2.5 text-[13px] text-muted-foreground"
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

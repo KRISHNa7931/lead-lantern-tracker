@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LogOut, Plus, Users } from "lucide-react";
+import { AlertTriangle, LogOut, Plus, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
@@ -12,7 +12,6 @@ import { LeadTable } from "@/components/leads/lead-table";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
 import { LeadsToolbar, type LeadFilters } from "@/components/leads/leads-toolbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -90,48 +89,53 @@ function LeadsPage() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-              <Users className="size-4.5 text-primary-foreground" />
+      {/* ── Slim header: 56px, white, bottom border ── */}
+      <header className="sticky top-0 z-10 h-14 border-b border-border bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between gap-3 px-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary">
+              <Users className="size-3.5 text-primary-foreground" />
             </span>
-            <span className="truncate text-base font-semibold tracking-tight">
+            <span className="truncate text-sm font-semibold tracking-tight text-foreground">
               Lead Manager
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="hidden max-w-[220px] truncate text-sm text-muted-foreground sm:inline">
+            <span className="hidden max-w-[200px] truncate text-xs text-muted-foreground sm:inline">
               {userEmail ?? "Team member"}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-11 gap-1.5 px-3 text-muted-foreground hover:text-foreground md:h-9"
+              className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground"
               onClick={handleSignOut}
             >
-              <LogOut className="size-4" />
-              Log out
+              <LogOut className="size-3.5" />
+              <span>Log out</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-5 px-4 py-5 pb-24 md:py-6 md:pb-10">
+      {/* ── Main content area ── */}
+      <main className="mx-auto max-w-[1200px] space-y-4 px-4 py-4 pb-24 md:px-6 md:py-5 md:pb-10">
         {isLoading ? (
           <LoadingSkeleton />
         ) : isError ? (
-          <Card className="rounded-xl">
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="font-medium">Couldn't load your leads</p>
-              <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-16 text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="size-5 text-destructive" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Couldn't load your leads</p>
+              <p className="text-xs text-muted-foreground">
                 Something went wrong while fetching the team's leads.
               </p>
-              <Button className="h-11" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <Button size="sm" className="h-8 text-xs" onClick={() => refetch()}>
+              Try again
+            </Button>
+          </div>
         ) : (
           <>
             <DashboardCards
@@ -154,32 +158,43 @@ function LeadsPage() {
             />
 
             {leads.length === 0 ? (
-              <Card className="rounded-xl">
-                <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                  <p className="font-medium">No leads yet. Add your first lead.</p>
-                  <Button className="h-11" onClick={() => setAddOpen(true)}>
-                    <Plus className="size-4" />
-                    Add lead
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-16 text-center">
+                <span className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                  <Users className="size-5 text-primary" />
+                </span>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">No leads yet</p>
+                  <p className="text-xs text-muted-foreground">
+                    Add your first lead to get started.
+                  </p>
+                </div>
+                <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setAddOpen(true)}>
+                  <Plus className="size-3.5" />
+                  Add lead
+                </Button>
+              </div>
             ) : filtered.length === 0 ? (
-              <Card className="rounded-xl">
-                <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                  <p className="font-medium">No leads match your filters</p>
-                  {!emptyFilters && (
-                    <Button
-                      variant="outline"
-                      className="h-11"
-                      onClick={() =>
-                        setFilters(EMPTY_FILTERS)
-                      }
-                    >
-                      Clear filters
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-16 text-center">
+                <span className="flex size-10 items-center justify-center rounded-full bg-muted">
+                  <Users className="size-5 text-muted-foreground" />
+                </span>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">No leads match your filters</p>
+                  <p className="text-xs text-muted-foreground">
+                    Try adjusting or clearing the active filters.
+                  </p>
+                </div>
+                {!emptyFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setFilters(EMPTY_FILTERS)}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
             ) : (
               <>
                 <div className="hidden md:block">
@@ -218,10 +233,10 @@ function LeadsPage() {
       <Button
         aria-label="Add lead"
         size="icon"
-        className="fixed right-5 bottom-5 z-10 size-14 rounded-full shadow-lg md:hidden"
+        className="fixed right-5 bottom-5 z-10 size-12 rounded-full shadow-lg transition-transform duration-150 hover:scale-105 md:hidden"
         onClick={() => setAddOpen(true)}
       >
-        <Plus className="size-6" />
+        <Plus className="size-5" />
       </Button>
 
       <AddLeadDialog open={addOpen} onOpenChange={setAddOpen} />
@@ -251,16 +266,20 @@ function LeadsPage() {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-6 md:gap-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-[64px] rounded-xl md:h-[72px]" />
+    <div className="space-y-4">
+      {/* 8-card grid skeleton */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <Skeleton key={index} className="h-16 rounded-xl" />
         ))}
       </div>
-      <Skeleton className="h-11 rounded-lg" />
-      <div className="space-y-2.5">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-[132px] rounded-xl" />
+      {/* Toolbar skeleton */}
+      <Skeleton className="h-9 rounded-lg" />
+      {/* Table rows skeleton */}
+      <div className="space-y-px overflow-hidden rounded-xl border border-border bg-card">
+        <Skeleton className="h-9 rounded-none" />
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-12 rounded-none" />
         ))}
       </div>
     </div>

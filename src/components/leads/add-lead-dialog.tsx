@@ -122,22 +122,23 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
     });
   }
 
+  void duplicateMobile;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[100dvh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add lead</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-h-[100dvh] overflow-y-auto rounded-xl p-5 sm:max-w-md max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:w-full max-md:max-w-full max-md:rounded-none">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-[15px] font-semibold">Add lead</DialogTitle>
+          <DialogDescription className="text-[13px]">
             Save a new lead for the team. Fields marked * are required.
           </DialogDescription>
         </DialogHeader>
 
         {duplicateName && (
-          <Alert variant="warning">
-            <AlertTitle>Duplicate mobile number</AlertTitle>
-            <AlertDescription>
-              A lead with this number already exists ({duplicateName}). Save
-              anyway?
+          <Alert variant="warning" className="rounded-lg py-3">
+            <AlertTitle className="text-[13px] font-semibold">Duplicate mobile number</AlertTitle>
+            <AlertDescription className="text-[12px]">
+              A lead with this number already exists ({duplicateName}). Save anyway?
             </AlertDescription>
           </Alert>
         )}
@@ -145,22 +146,22 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(checkAndSave)}
-            className="space-y-4"
+            className="space-y-3.5"
           >
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name *</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Name *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. Rohan Mehta"
                       {...field}
-                      className="h-11"
+                      className="h-9 rounded-lg text-[13px]"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
             />
@@ -169,36 +170,36 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               control={form.control}
               name="mobile"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mobile *</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Mobile *</FormLabel>
                   <FormControl>
                     <Input
                       inputMode="tel"
                       placeholder="98765 43210"
                       {...field}
-                      className="h-11"
+                      className="h-9 rounded-lg text-[13px] tabular-nums"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
             />
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3.5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="business_name"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business name</FormLabel>
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-[12px] font-medium text-muted-foreground">Business name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g. Mehta Sweets"
                         {...field}
-                        className="h-11"
+                        className="h-9 rounded-lg text-[13px]"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[11px]" />
                   </FormItem>
                 )}
               />
@@ -207,16 +208,16 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
                 control={form.control}
                 name="city"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-[12px] font-medium text-muted-foreground">City</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g. Jamnagar"
                         {...field}
-                        className="h-11"
+                        className="h-9 rounded-lg text-[13px]"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[11px]" />
                   </FormItem>
                 )}
               />
@@ -226,23 +227,23 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               control={form.control}
               name="service"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Service *</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Service *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-11 w-full">
+                      <SelectTrigger className="h-9 w-full rounded-lg text-[13px]">
                         <SelectValue placeholder="Select service" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {SERVICES.map((service) => (
-                        <SelectItem key={service} value={service}>
+                        <SelectItem key={service} value={service} className="text-[13px]">
                           {service}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
             />
@@ -251,12 +252,12 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               control={form.control}
               name="follow_up_date"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Follow-up date</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Follow-up date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} className="h-11" />
+                    <Input type="date" {...field} className="h-9 rounded-lg text-[13px]" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
             />
@@ -265,26 +266,28 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               control={form.control}
               name="notes"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-[12px] font-medium text-muted-foreground">Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Anything the team should know…"
                       rows={3}
+                      className="rounded-lg text-[13px] resize-none"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
             />
 
-            <DialogFooter className="gap-2 sm:gap-2">
+            <DialogFooter className="gap-2 pt-1 sm:gap-2">
               {duplicateName && (
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11"
+                  size="sm"
+                  className="h-9 rounded-lg text-[13px]"
                   onClick={() => setDuplicateName(null)}
                 >
                   Cancel
@@ -292,7 +295,8 @@ export function AddLeadDialog({ open, onOpenChange }: AddLeadDialogProps) {
               )}
               <Button
                 type="submit"
-                className="h-11 flex-1 sm:flex-none"
+                size="sm"
+                className="h-9 flex-1 rounded-lg text-[13px] sm:flex-none"
                 disabled={addLead.isPending}
               >
                 {addLead.isPending ? "Saving…" : duplicateName ? "Save anyway" : "Save lead"}

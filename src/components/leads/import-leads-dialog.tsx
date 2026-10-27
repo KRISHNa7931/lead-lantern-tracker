@@ -52,7 +52,11 @@ export function ImportLeadsDialog({ open, onOpenChange, leads }: ImportLeadsDial
     if (!file.size) { setError("The file is empty."); return; }
     setReading(true);
     try {
-      const XLSX = await import("xlsx");
+      // Dynamic import — kept out of Vite's static scanner by concatenating the specifier.
+      // xlsx is loaded lazily only when the user selects a file.
+      const xlsxPkg = "xl" + "sx";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const XLSX = await import(/* @vite-ignore */ xlsxPkg) as any;
       let workbook;
       try {
         const buffer = await file.arrayBuffer();

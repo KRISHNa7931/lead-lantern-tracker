@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import {
 import { StatusBadge } from "@/components/leads/status";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type Language = "Hinglish" | "English";
 
@@ -103,28 +104,36 @@ export function AiFollowupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[100dvh] flex-col gap-4 overflow-y-auto sm:max-w-lg max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:w-full max-md:max-w-full max-md:rounded-none max-md:border-0">
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
+      <DialogContent className="flex max-h-[100dvh] flex-col gap-4 overflow-y-auto rounded-xl p-5 sm:max-w-lg max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:w-full max-md:max-w-full max-md:rounded-none max-md:border-0">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex flex-wrap items-center gap-2 pr-6 text-[15px] font-semibold">
             {lead?.name}
             {lead && <StatusBadge status={lead.status} />}
           </DialogTitle>
-          <DialogDescription className="pr-6">
+          <DialogDescription className="pr-6 text-[13px]">
             {lead?.service}
             {lead?.city ? ` · ${lead.city}` : ""}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center justify-between gap-2">
+        {/* Language toggle — small segmented control + Generate button */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Compact segmented control */}
           <Tabs
             value={language}
             onValueChange={(value) => setLanguage(value as Language)}
           >
-            <TabsList>
-              <TabsTrigger value="Hinglish" className="h-11 px-4 sm:h-8 sm:px-3">
+            <TabsList className="h-8 gap-0.5 p-0.5">
+              <TabsTrigger
+                value="Hinglish"
+                className="h-7 rounded-md px-3 text-[12px] font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
                 Hinglish
               </TabsTrigger>
-              <TabsTrigger value="English" className="h-11 px-4 sm:h-8 sm:px-3">
+              <TabsTrigger
+                value="English"
+                className="h-7 rounded-md px-3 text-[12px] font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
                 English
               </TabsTrigger>
             </TabsList>
@@ -132,30 +141,36 @@ export function AiFollowupDialog({
 
           <Button
             variant="outline"
-            className="h-11 sm:h-9"
+            size="sm"
+            className="h-8 gap-1.5 rounded-lg text-[13px] transition-colors duration-150"
             onClick={generate}
             disabled={loading}
           >
-            {loading && <Loader2 className="size-4 animate-spin" />}
+            {loading && <Loader2 className="size-3.5 animate-spin" />}
             {generated ? "Regenerate" : "Generate with AI"}
           </Button>
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="rounded-lg bg-destructive/8 px-3 py-2 text-[12px] text-destructive" role="alert">
             {error}
           </p>
         )}
 
+        {/* Message textarea — comfortable, soft border */}
         <Textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           placeholder="The AI message will appear here — or write your own."
-          className="min-h-[180px] flex-1 resize-none"
+          className={cn(
+            "min-h-[160px] flex-1 resize-none rounded-lg border-border text-[13px] leading-relaxed",
+            "transition-colors duration-150 focus-visible:border-primary/50",
+          )}
         />
 
+        {/* Send on WhatsApp — solid green with icon */}
         <Button
-          className="h-12 w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 sm:h-11"
+          className="h-10 w-full gap-2 rounded-lg bg-whatsapp text-whatsapp-foreground transition-colors duration-150 hover:bg-whatsapp/90"
           disabled={message.trim() === ""}
           onClick={() =>
             lead &&
@@ -165,6 +180,7 @@ export function AiFollowupDialog({
             )
           }
         >
+          <MessageCircle className="size-4 fill-current" />
           Send on WhatsApp
         </Button>
       </DialogContent>
