@@ -121,13 +121,13 @@ export function ImportLeadsDialog({ open, onOpenChange, leads }: ImportLeadsDial
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
       <DialogContent className="flex max-h-[90dvh] flex-col gap-4 md:max-w-4xl max-md:h-dvh max-md:max-h-dvh max-md:max-w-none max-md:rounded-none max-md:p-4" onEscapeKeyDown={(event) => { if (busy) event.preventDefault(); }} onInteractOutside={(event) => { if (busy) event.preventDefault(); }}>
-        <DialogHeader className="shrink-0 pr-8">
+        <DialogHeader className="shrink-0 break-words pr-8">
           <DialogTitle>Import leads</DialogTitle>
           <DialogDescription>{fileName || "CSV or Excel workbook"}</DialogDescription>
         </DialogHeader>
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
           <div className="flex flex-wrap items-center gap-2">
-            <Input ref={fileInput} type="file" id="lead-import-file" accept=".csv,.xlsx" className="sr-only" disabled={busy} onChange={(event) => {
+            <Input ref={fileInput} type="file" id="lead-import-file" accept=".csv,.xlsx" className="hidden" disabled={busy} onChange={(event) => {
               const file = event.target.files?.[0]; if (file) void readFile(file); event.target.value = "";
             }} />
             <Button variant="outline" className="h-11" disabled={busy} onClick={() => fileInput.current?.click()}>
