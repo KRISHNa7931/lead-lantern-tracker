@@ -1,104 +1,155 @@
-# Lead Lantern Tracker
+# Lead Manager
 
-Build a mobile-first "Lead Manager" web app for a sales team using React, TypeScript, Tailwind and shadcn/ui, with Supabase for database and auth. Use a clean, modern, professional look (white/slate background, one accent color, rounded cards). Name the app "Lead Manager".
+A simple web app for a sales team to save leads, track them through a pipeline, and follow up on WhatsApp with an AI-written message. I built it for the Neo Grow AI Generalist Test (Part A).
 
-make sure, (1) Supabase project is created, (2) the leads table SQL and seed SQL from PRD.md have been run, (3) "Confirm email" is turned OFF in Supabase Auth, (4) Lovable is connected to that Supabase project.
+**Live app:** https://lead-lantern-tracker.vercel.app
+**login:**  just sign up with any email, no verification needed)
 
-IMPORTANT RULES
-The Supabase table public.leads ALREADY EXISTS with Row Level Security and policies. Do NOT create, alter or drop tables, and do NOT create any migrations. Do NOT create any Supabase Edge Functions.
-Columns of leads: id (uuid), name (text), mobile (text, 10 digits), business_name (text), city (text), service (text), status (text, default 'New'), notes (text), follow_up_date (date, nullable, ignore it in the UI for now), created_by (uuid), created_at (timestamptz), updated_at (timestamptz).
-Allowed service values (exact strings): "WhatsApp Bulk", "RCS SMS", "Social Media Management", "WhatsApp AI Agent".
-Allowed status values (exact strings): "New", "Contacted", "Interested", "Closed", "Not Interested".
-Never put any AI API key in the frontend. The AI call goes to my own endpoint POST /api/generate-followup (I will add that backend file myself later). Just call it with fetch as described below.
-Use the Supabase client only with the public URL and anon key from the Supabase integration.
-Authentication
-Email + password login using Supabase Auth, on a /auth page with two tabs: "Log in" and "Sign up". No email confirmation step: after sign-up the user is logged in directly.
-Show clear error messages (wrong password, email already used, password too short; min 6 chars).
-/ (main page) is protected: logged-out users are redirected to /auth. Logged-in users visiting /auth go to /.
-Header shows the app name, the logged-in email and a "Log out" button.
-This is a TEAM app: every logged-in user sees and edits ALL leads. Do not filter by user.
-Main page layout (top to bottom)
-Dashboard cards: "Total Leads" plus one card each for New, Contacted, Interested, Closed, Not Interested, each showing a count. Always count ALL leads, ignoring search and filters. Layout: 2 columns on phones, 6 across on desktop. Each card has a small colored status badge/color. The counts must update immediately when a lead's status changes or a lead is added or deleted (compute them from the in-memory leads list).
-Toolbar: a search input (placeholder "Search by name or mobile"), a Status filter dropdown (All + 5 statuses), a Service filter dropdown (All + 4 services), a "Clear filters" button, and an "Add lead" button. On phones make "Add lead" a floating action button at the bottom right.
-Lead list, sorted by created_at descending (newest first):
-Desktop (768px and up): a table with columns Name, Mobile, Business, City, Service, Status, Created (date), Actions.
-Phone (below 768px): a card per lead showing name, mobile, business, city, service, notes (truncated), status dropdown, and two buttons. No horizontal scrolling anywhere.
-Status is an inline dropdown on every lead. Changing it updates Supabase immediately (optimistic update; if it fails, revert and show an error toast).
-Actions per lead: an "AI Follow-up" button and a "Delete" button (confirm dialog before deleting).
-Load all leads once with Supabase (select * order by created_at desc) and do the search and filters in the browser. Search matches name (case-insensitive, partial) OR mobile (partial). Search, status filter and service filter combine with AND.
-States (important, do all of them)
-Loading: skeleton rows/cards while leads load.
-Empty: if there are no leads at all, show "No leads yet. Add your first lead." with an Add button. If filters match nothing, show "No leads match your filters" with a Clear filters button.
-Error: if loading fails, show an error message with a Retry button.
-Success/error toasts for add, status change, delete and AI actions.
-Buttons show spinners and are disabled while saving.
-Add lead form (modal dialog; full-screen on phones)
+---
 
-Fields: Name (required), Mobile number (required), Business name, City, Service interested in (dropdown of the 4 services, required, with placeholder "Select service"), Notes (textarea). Validation with inline error messages:
+## What the app does
 
-Name: required.
-Mobile: normalize first, then validate. Normalization function: remove every non-digit character; remove leading zeros; if the result is 12 digits and starts with "91", remove the "91". The final value must match /^[6-9]\d{9}$/ (a valid 10-digit Indian mobile). Save only the clean 10 digits. So "+91 98765-43210", "098765 43210" and "9876543210" all save as 10 digits. Otherwise show "Enter a valid 10-digit mobile number".
-Service: required. Duplicate warning: before inserting, check the loaded leads for the same 10-digit mobile. If found, show a confirm dialog: "A lead with this number already exists (<existing name>). Save anyway?" with Cancel and "Save anyway". Do not block saving. After a successful insert, close the modal, add the lead to the top of the list, and show a success toast.
-AI Follow-up modal (full-screen on phones, centered dialog on desktop)
+The team gets leads for four services: **WhatsApp Bulk, RCS SMS, Social Media Management, WhatsApp AI Agent**. In this app they can:
 
-Opens when the user clicks "AI Follow-up" on a lead. Contents:
+- **Add a lead**: name, mobile, business, city, service (dropdown) and notes. The mobile number is cleaned automatically (`+91 98765-43210` and `098765 43210` both save as 10 digits). A warning shows if the same number already exists.
+- **See all leads**, newest first. A table on desktop, cards on phones.
+- **Change status**: New, Contacted, Interested, Closed, Not Interested. It saves instantly.
+- **Search and filter**: search by name or mobile, filter by status and service, and sort (for example "Interested first").
+- **Dashboard counts**: total plus one count per status. They update right after any change.
+- **Generate an AI follow-up**: click "AI Follow-up" on a lead, pick English or Hinglish, and Gemini writes a short personal WhatsApp message from the lead's service, status and notes. You can edit it before sending.
+- **Send on WhatsApp**: opens a `wa.me` link with the message already filled in.
+- **Everything is saved** in a real database, so it stays after a refresh and on any other device.
+- **Works on a phone**: no sideways scrolling, big tap targets, full-screen dialogs.
 
-Header with the lead's name, service and a status badge.
-A language toggle with two options: "English" and "Hinglish" (default "Hinglish").
-A primary button "Generate with AI" (label changes to "Regenerate" after the first message). Shows a spinner while loading.
-A multi-line editable textarea showing the generated message so the user can tweak it. Placeholder: "Click Generate with AI to write a message".
-A green button "Send on WhatsApp" (WhatsApp icon), disabled while the textarea is empty. On click it opens this URL in a new tab with rel="noopener noreferrer": https://wa.me/91${lead.mobile}?text=${encodeURIComponent(textareaValue)} (lead.mobile is already 10 clean digits.) When the user clicks "Generate with AI", call:
-const { data: { session } } = await supabase.auth.getSession();
-const res = await fetch("/api/generate-followup", {
-  method: "POST",
-  headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-  body: JSON.stringify({ name, businessName, city, service, status, notes, language }),
-});
+**Bonus features I added**
+- **Login** with Supabase Auth. Only logged-in team members can see the leads. It is team-wide: everyone sees the same leads.
+- **Follow-up date** on each lead, with "Due today" and "Overdue" counts and a filter.
+- **CSV/Excel import** with a preview that marks valid, invalid and duplicate rows before importing.
+- **Edit lead**, so a lead can be corrected after it is created.
 
-where language is "English" or "Hinglish" and the other values come from the lead. The response JSON is { message: string } on success or { error: string } on failure. Put message into the textarea. Error handling inside the modal (show as a friendly inline message, not a crash):
+---
 
-HTTP 404: "AI is available only on the deployed site."
-HTTP 401: "Your session expired. Please log in again."
-Any other failure or network error: "Could not generate a message. Please try again." Do NOT call Gemini, OpenAI or any AI service directly from the frontend, and do NOT create an AI backend inside Supabase.
-Responsiveness and polish
-Mobile first. Test mentally at 360px width: no horizontal scroll, tap targets at least 44px high, readable text, dropdowns and modals usable with a thumb.
-Use the shadcn/ui components (Table, Card, Dialog, Select, Input, Textarea, Button, Badge, Toast/Sonner, Skeleton, AlertDialog).
-Status badge colors: New = blue, Contacted = amber, Interested = purple, Closed = green, Not Interested = gray/red.
-Use TanStack Query (or equivalent) for data fetching and state so updates are instant.
-Keep the code simple and well organized: separate files for the Auth page, the main page, the AddLeadDialog, the FollowUpDialog, a lib/phone.ts file with the mobile normalization and the wa.me link helper, and a lib/constants.ts file with the SERVICES and STATUSES arrays so they are easy to change.
-Add a vercel.json-friendly setup: no server-side code in this project; it is a pure client-side Vite app.
+## Tools I used and what each one did
 
-Build all of this now in one go.
+| Tool | What I used it for |
+|---|---|
+| **Claude** | Acted as my senior developer: planning, the PRD, writing the prompts for Lovable, debugging, the AI server route, and this README |
+| **Lovable** | Generated the app (React + TanStack Start + Tailwind + shadcn/ui) and later UI changes |
+| **Supabase** | Postgres database, email/password login, and Row Level Security |
+| **Gemini API** (`gemini-3.8-flash`) | Writes the follow-up messages in English or Hinglish |
+| **Vercel** | Hosting. It also runs the server route that holds the Gemini key |
+| **GitHub** | Source code, synced with Lovable |
+| **Antigravity** | Fixing code locally, so I did not spend Lovable credits on small things |
+| **SheetJS (`xlsx`)** | Reads `.csv` and `.xlsx` files in the import feature |
 
-After Lovable finishes: quick check before spending more credits
-Log in with the demo user and confirm you see the 10 seed leads.
-Add a lead, change a status, search, filter, delete.
-Open AI Follow-up (the "deployed site only" message is expected in the preview).
-Connect GitHub from Lovable, then continue with the Vercel steps in PRD.md (section 11).
-Follow-up prompts to keep in your back pocket (use only if needed, each costs a credit)
-"Fix: the dashboard counts do not update right after changing a status. Compute them from the same leads state used by the list."
-"Fix: on phones the lead card overflows horizontally. Make all content wrap and remove horizontal scrolling."
-"The AI Follow-up modal should be full screen on screens below 768px."
+## How it is built
 
-if anything needs to be done by my side you if you need anything else from me just ask me...
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/2b804134-c1b2-4da2-a79f-957934cf1c9e).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
 ```
+Browser (React app, TanStack Start)
+   |-- supabase-js --------------------> Supabase (leads table, Auth, RLS)
+   |-- POST /api/generate-followup  (sends the user's login token)
+            |
+            v
+   Server route on Vercel (src/routes/api/generate-followup.ts)
+      1. checks the login token with Supabase (401 if invalid)
+      2. calls Gemini using GEMINI_API_KEY (server-only variable)
+      3. returns { message }
+   The browser shows the message in an editable box.
+   "Send on WhatsApp" opens https://wa.me/91<mobile>?text=<encoded message>
+```
+
+**Security**
+- The Gemini key is only in Vercel's environment variables. It is never in the frontend or in this repo.
+- The AI route rejects requests without a valid login, so nobody can use my Gemini quota.
+- Row Level Security is on. Only logged-in users can read or write leads, and logged-out visitors get nothing.
+- The Supabase URL and publishable key are public by design (RLS protects the data).
+- Known trade-off: any signed-in user can edit or delete any lead. This is intentional because the app is team-wide. Sign-up is also open so reviewers can try it. In a real company I would make it invite-only and add roles.
+
+## Database
+
+One table, `leads`, with checks in the database itself: the mobile must be a valid 10-digit Indian number, `service` must be one of the 4 services, `status` must be one of the 5 statuses (default `New`). RLS policies allow the `authenticated` role only. The original plan is in `PRD.md`. The AI endpoint changed after that (see Problems faced).
+
+---
+
+## How to run it locally
+
+You need [Bun](https://bun.sh) (the repo has a `bun.lock`) and a free [Supabase](https://supabase.com) project with the `leads` table and policies from `PRD.md`.
+
+```bash
+git clone https://github.com/KRISHNa7931/lead-lantern-tracker.git
+cd lead-lantern-tracker
+bun install
+```
+
+Set these environment variables (names only, never commit real secrets):
+
+| Variable | Where it is used | Secret? |
+|---|---|---|
+| `VITE_SUPABASE_URL` | browser | no |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | browser | no |
+| `SUPABASE_URL` | AI server route | no |
+| `SUPABASE_PUBLISHABLE_KEY` | AI server route | no |
+| `GEMINI_API_KEY` | AI server route | **yes** |
+| `GEMINI_MODEL` | optional, defaults to `gemini-3.8-flash` | no |
+
+```bash
+ bun run dev
+```
+
+**Deploying to Vercel:** import the repo, add the variables above (only `GEMINI_API_KEY` as Sensitive) plus `NITRO_PRESET=vercel`, then deploy. Environment variable changes only take effect after a redeploy.
+
+---
+
+## Prompt log: my 5 most important prompts
+
+**1. The PRD and the first big Lovable prompt**
+I started by writing a full PRD with Claude (stack, database SQL, screens, business rules, security checklist) and turned it into one detailed prompt for Lovable: build a mobile-first "Lead Manager" with Supabase auth, a team-wide leads table, dashboard, search/filters, an AI follow-up dialog and a WhatsApp link. The prompt said exactly what NOT to touch ("the table already exists, do not create migrations or Edge Functions, no API key in the frontend").
+*Built:* the whole base app in one go, which mattered because I only had about 10 free credits.
+
+**2. The fix prompt: bugs plus Follow-up date / Due today**
+After testing the first build I wrote one prompt, in priority order: (1) the delete confirmation stayed open after a successful delete, (2) "Clear filters" was always visible, (3) add a sort dropdown ("Interested first", "New first" and so on, where the rest of the list stays visible), then (4) the follow-up date with "Due today" and "Overdue" cards.
+*Fixed/built:* the dialog now closes on success or failure, Clear filters only shows when a filter is active, sorting, and the follow-up date feature using local dates so Indian users do not get off-by-one days.
+
+**3. The xlsx import fix**
+Problem: CSV import worked, but Excel (.xlsx) import failed with Failed to resolve module specifier "xlsx".
+Root cause: The import code loaded the xlsx library in a way that hid it from the build tool (Vite): the package name was built by joining strings ("xl" + "sx") and marked /* @vite-ignore */. Because of this, Vite never bundled the library. At runtime the browser received a bare import("xlsx") that it had no way to resolve.
+Fix: I described the symptom to an AI coding agent in Antigravity. It replaced the hidden import with a normal import("xlsx") in import-leads-dialog.tsx and installed the package. The library is now bundled as a separate lazy-loaded chunk, so it only downloads when someone picks a file. Excel files now upload and preview.
+
+**4. The UI redesign prompt**
+I found the first UI bulky, so I wrote a single "UI-ONLY" prompt with a strict list of files and logic it must not touch. It asked for a compact dashboard in one row, a cleaner table, and a name rule: names stay on one line, and if they are longer than 18 characters only the last word moves to the second line.
+*Built:* the cleaner professional look on desktop and phone, with no logic changed.
+
+**5. Edit lead + sort cleanup**
+Leads could not be edited after creation. I asked for an "Edit lead" pencil that appears only on row hover (outside the table on wide screens, inside the row on tablets, always visible on phone cards) and reuses the Add lead dialog, prefilled. The prompt also said the duplicate-mobile warning must ignore the lead being edited, and removed the confusing "Newest/Oldest" sort options.
+*Built:* editing with the same validation as adding, and a sort dropdown that behaves as I wanted.
+
+**Smaller prompts and edits:** a prompt for the CSV/Excel import with a preview, a prompt to move the delete bin to hover-only outside the table, and one to line up the Actions heading. I also wrote the AI endpoint myself with Claude and added it in Antigravity, because it was cheaper than spending credits.
+
+---
+
+## Problems faced and how I fixed them
+
+**1. The AI button failed on Vercel with "401" / "Your session expired"**
+The AI worked on my side but not on the deployed site. The browser showed a 401 from `/api/generate-followup`. That told me the route was running (so it was not a 404 or a missing file) and that its login check was failing. When I added the Supabase URL and publishable key to Vercel, I had marked them as **Sensitive/secret**. I asked Claude, which pointed out that these two values are public by design and belong in normal config, and that typos or quote marks in the values would break the check. I deleted both, re-added them as plain variables (no quotes, no spaces, enabled for Production), kept only `GEMINI_API_KEY` as Sensitive, and **redeployed**. The AI worked after that. I learned that an environment variable change does nothing until you redeploy.
+*(I cannot be 100% sure whether the Sensitive flag or a typo was the exact cause. Re-adding them cleanly fixed it.)*
+
+**2. Lovable generated a different framework than my plan**
+My PRD assumed a plain Vite app with a Vercel `api/generate-followup.js` file. Lovable told me it had built a newer **TanStack Start** app. I checked the code in GitHub and saw that my plan would not work as written, so I rewrote the AI endpoint as a TanStack Start server route (`src/routes/api/generate-followup.ts`). The build also defaulted to a Cloudflare target, so I added `NITRO_PRESET=vercel` on Vercel. I dropped the `vercel.json` rewrite from the plan.
+
+**3. Excel files would not import**
+CSV worked, but `.xlsx` showed "Failed to resolve module specifier 'xlsx'". See prompt 3 above. I gave the exact error text and asked for the cause rather than guessing.
+
+**4. The delete confirmation stayed open**
+After a successful delete the lead disappeared and the toast showed, but the dialog stayed open. I wrote a precise fix prompt: make the dialog controlled and close it when the request finishes, success or failure.
+
+**How I handled breakdowns with limited credits:** I tested the live site, wrote down only what actually failed, and gave Lovable one prompt per batch with strict "do not touch" rules. Anything small (a class name, alignment, an environment variable) I fixed in Antigravity for free, and I used Lovable's revert button when a change went wrong.
+
+---
+
+## Limitations and what I would do next
+
+- Keep-alive for Supabase: free projects pause after about a week without use, so I check the link before a demo.
+- Invite-only sign-up and roles (admin vs salesperson) for a real team.
+- A rate limit on the AI route and a saved history of sent messages.
+
+**Total time spent:** `4 hours`
