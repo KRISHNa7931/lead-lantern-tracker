@@ -1,0 +1,4 @@
+- [x] Add CSV/XLSX parsing, validation, duplicate detection, and rule tests.
+- [x] Add import dialog, sample CSV, chunked insertion, progress, and cache refresh.
+- [x] Verify tests, isolated desktop/phone dialog, and clean preview build; fix existing typing errors without changing behavior.
+- [ ] Verify real signed-in import end to end: external Supabase session is unavailable to the test browser; mocked insertion was checked instead.

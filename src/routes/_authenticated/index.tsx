@@ -9,6 +9,7 @@ import { DashboardCards } from "@/components/leads/dashboard-cards";
 import { DeleteLeadDialog } from "@/components/leads/delete-lead-dialog";
 import { LeadCards } from "@/components/leads/lead-cards";
 import { LeadTable } from "@/components/leads/lead-table";
+import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
 import { LeadsToolbar, type LeadFilters } from "@/components/leads/leads-toolbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +63,7 @@ function LeadsPage() {
 
   const [filters, setFilters] = useState<LeadFilters>(EMPTY_FILTERS);
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [aiLead, setAiLead] = useState<Lead | null>(null);
   const [deleteLeadTarget, setDeleteLeadTarget] = useState<Lead | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -146,6 +148,7 @@ function LeadsPage() {
               filters={filters}
               onFiltersChange={setFilters}
               onAddLead={() => setAddOpen(true)}
+              onImport={() => setImportOpen(true)}
               sort={sort}
               onSortChange={setSort}
             />
@@ -222,6 +225,7 @@ function LeadsPage() {
       </Button>
 
       <AddLeadDialog open={addOpen} onOpenChange={setAddOpen} />
+      <ImportLeadsDialog open={importOpen} onOpenChange={setImportOpen} leads={leads} />
       <AiFollowupDialog
         lead={aiLead}
         open={aiLead !== null}

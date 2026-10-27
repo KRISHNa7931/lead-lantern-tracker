@@ -142,10 +142,10 @@ export const Route = createFileRoute("/api/generate-followup")({
             return json({ error: "Not logged in" }, 401);
           }
 
-          const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+          const supabaseUrl = process.env['SUPABASE_URL'] || process.env['VITE_SUPABASE_URL'];
           const supabaseKey =
-            process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          const geminiKey = process.env.GEMINI_API_KEY;
+            process.env['SUPABASE_PUBLISHABLE_KEY'] || process.env['VITE_SUPABASE_PUBLISHABLE_KEY'];
+          const geminiKey = process.env['GEMINI_API_KEY'];
           if (!supabaseUrl || !supabaseKey || !geminiKey) {
             console.error("generate-followup: missing server env vars");
             return json({ error: "Server is not configured" }, 500);
@@ -163,13 +163,13 @@ export const Route = createFileRoute("/api/generate-followup")({
 
           // 2. Read and validate input.
           const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-          const name = clean(body?.name, 100);
-          const businessName = clean(body?.businessName, 150);
-          const city = clean(body?.city, 100);
-          const service = clean(body?.service, 100);
-          const status = clean(body?.status, 50);
-          const notes = clean(body?.notes, 1000);
-          const language = body?.language === "English" ? "English" : "Hinglish";
+          const name = clean(body?.['name'], 100);
+          const businessName = clean(body?.['businessName'], 150);
+          const city = clean(body?.['city'], 100);
+          const service = clean(body?.['service'], 100);
+          const status = clean(body?.['status'], 50);
+          const notes = clean(body?.['notes'], 1000);
+          const language = body?.['language'] === "English" ? "English" : "Hinglish";
           if (!name || !service || !status) {
             return json({ error: "Missing lead details" }, 400);
           }
@@ -189,7 +189,7 @@ export const Route = createFileRoute("/api/generate-followup")({
           ].join("\n");
 
           // 4. Call Gemini (key comes from the server env var).
-          const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+          const model = process.env['GEMINI_MODEL'] || DEFAULT_MODEL;
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
           const geminiRes = await fetchWithRetry(geminiUrl, {
